@@ -16,3 +16,16 @@ class LearningPipeline(object):
             'cover_img': item['cover_img']
         })
         return item
+
+
+class QiushiPipeline(object):
+    def process_item(self, item, spider):
+        db.qiushi.insert_one({
+            'unique': item['unique'],
+            'author': item['author'],
+            'sex': item['sex'],
+            'content': item['content'],
+            'starts': item['starts'],
+            'comments_num': item['comments_num']
+        })
+        return item

@@ -15,3 +15,12 @@ class LearningItem(scrapy.Item):
     scores = scrapy.Field()
     comment = scrapy.Field()
     cover_img = scrapy.Field()
+
+
+class QiushiItem(scrapy.Item):
+    unique = scrapy.Field()
+    author = scrapy.Field()
+    sex = scrapy.Field()
+    content = scrapy.Field()
+    starts = scrapy.Field()
+    comments_num = scrapy.Field()
