@@ -31,6 +31,9 @@ class Qiushi(scrapy.Spider):
             yield item
         next_url = response.css('.pagination .next').extract_first()
         if next_url is not None:
-            url = response.urljoin(response.css('.pagination a::attr(href)').extract()[:1][0])
-            print(url)
+            url = response.urljoin(response.css('.pagination a::attr(href)').extract()[-1:][0])
             yield scrapy.Request(url, self.parse, headers=self.headers)
+
+        new_url = response.css('.random::attr(href)').extract_first()
+        if new_url is not None:
+            yield scrapy.Request(response.urljoin(new_url), self.parse, headers=self.headers)
