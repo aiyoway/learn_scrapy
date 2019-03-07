@@ -5,6 +5,7 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+from learning.mongo import db
 from scrapy import signals
 
 
@@ -101,3 +102,9 @@ class LearningDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class ProxyMiddleware(object):
+    def process_request(self, request, spider):
+        request.meta['proxy'] = self.get_ip()
+
