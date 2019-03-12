@@ -127,24 +127,24 @@ class ProxyMiddleware(object):
 
     def process_response(self, request, response, spider):
         if response.status != 200:
-            if "proxy" in request.meta.keys() and request.meta["proxy"]:
-                print('代理：%s，出错' % request.meta['proxy'])
+            print('代理：%s，出错:%s' % (request.meta['proxy'], response.status))
             return self.new_request(request)
         return response
 
     # 请求抛出异常
     def process_exception(self, request, exception, spider):
-        if "proxy" in request.meta.keys() and request.meta["proxy"]:
-            print('代理：%s，异常' % request.meta['proxy'])
+        print('代理：%s，异常' % request.meta['proxy'])
         return self.new_request(request)
 
     def new_request(self, request):
         # 删除无效代理
-        Ip.remove_ip(request.meta['proxy'])
+        if 'proxy' in request.meta.keys():
+            Ip.remove_ip(request.meta['proxy'])
         if len(self.ips) < 1:
             self.ips = Ip().get_ips()
+        if len(self.ips) > 0:
+            request.meta['proxy'] = self.ips.pop()['proxy']
+        request.meta["change_proxy"] = False
+        request.dont_filter = True
         new_request = request.copy()
-        new_request.meta['proxy'] = self.ips.pop()['proxy']
-        new_request.meta["change_proxy"] = False
-        new_request.dont_filter = True
         return new_request
