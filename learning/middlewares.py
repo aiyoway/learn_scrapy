@@ -5,8 +5,11 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-from learning.mongo import db
 from scrapy import signals
+from fake_useragent import UserAgent
+from twisted.web._newclient import ResponseNeverReceived
+# from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError
+from learning.ip import Ip
 
 
 class LearningSpiderMiddleware(object):
@@ -105,6 +108,43 @@ class LearningDownloaderMiddleware(object):
 
 
 class ProxyMiddleware(object):
-    def process_request(self, request, spider):
-        request.meta['proxy'] = self.get_ip()
+    # DONT_RETRY_ERRORS = (TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError)
 
+    def __init__(self):
+        self.ips = Ip().get_ips()
+
+    def process_request(self, request, spider):
+        ua = UserAgent()
+        request.headers.setdefault('User-Agent', ua.random)
+        if "change_proxy" in request.meta.keys() and request.meta["change_proxy"]:
+            if len(self.ips) < 1:
+                self.ips = Ip().get_ips()
+            if len(self.ips > 0):
+                ip = self.ips.pop()
+                request.meta['proxy'] = ip['proxy']
+                request.meta["change_proxy"] = False
+        return None
+
+    def process_response(self, request, response, spider):
+        if response.status != 200:
+            if "proxy" in request.meta.keys() and request.meta["proxy"]:
+                print('代理：%s，出错' % request.meta['proxy'])
+            return self.new_request(request)
+        return response
+
+    # 请求抛出异常
+    def process_exception(self, request, exception, spider):
+        if "proxy" in request.meta.keys() and request.meta["proxy"]:
+            print('代理：%s，异常' % request.meta['proxy'])
+        return self.new_request(request)
+
+    def new_request(self, request):
+        # 删除无效代理
+        Ip.remove_ip(request.meta['proxy'])
+        if len(self.ips) < 1:
+            self.ips = Ip().get_ips()
+        new_request = request.copy()
+        new_request.meta['proxy'] = self.ips.pop()['proxy']
+        new_request.meta["change_proxy"] = False
+        new_request.dont_filter = True
+        return new_request

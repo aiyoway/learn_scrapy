@@ -4,8 +4,10 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-from learning.mongo import db
+from learning.mongo import client
 from pymongo import errors
+
+db = client.scrapy
 
 
 class LearningPipeline(object):

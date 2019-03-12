@@ -6,13 +6,10 @@ from learning.items import QiushiItem
 
 class Qiushi(scrapy.Spider):
     name = 'qiushi'
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36',
-    }
 
     def start_requests(self):
         url = 'http://www.qiushibaike.com/history/'
-        yield scrapy.Request(url, headers=self.headers)
+        yield scrapy.Request(url)
 
     def parse(self, response):
         item = QiushiItem()
@@ -32,8 +29,12 @@ class Qiushi(scrapy.Spider):
         next_url = response.css('.pagination .next').extract_first()
         if next_url is not None:
             url = response.urljoin(response.css('.pagination a::attr(href)').extract()[-1:][0])
-            yield scrapy.Request(url, self.parse, headers=self.headers)
+            req = scrapy.Request(url, self.parse)
+            req.meta['change_proxy'] = True
+            yield req
 
         new_url = response.css('.random::attr(href)').extract_first()
         if new_url is not None:
-            yield scrapy.Request(response.urljoin(new_url), self.parse, headers=self.headers)
+            req = scrapy.Request(response.urljoin(new_url), self.parse)
+            # req.meta['change_proxy'] = True
+            yield req
